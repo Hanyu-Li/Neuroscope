@@ -137,7 +137,7 @@ function ParticlePool( poolSize ) {
 	this.meshComponents = new THREE.Object3D();
 
 	// inner particle
-	this.pMat = new THREE.PointCloudMaterial( {
+	this.pMat = new THREE.PointsMaterial( {
 		map: this.spriteTextureSignal,
 		size: this.pSize,
 		color: this.pColor,
@@ -146,7 +146,7 @@ function ParticlePool( poolSize ) {
 		transparent: true
 	} );
 
-	this.pMesh = new THREE.PointCloud( this.pGeom, this.pMat );
+	this.pMesh = new THREE.Points( this.pGeom, this.pMat );
 	this.pMesh.frustumCulled = false;
 
 	this.meshComponents.add( this.pMesh );
@@ -157,7 +157,7 @@ function ParticlePool( poolSize ) {
 	this.pMat_outer.size = this.pSize * 10;
 	this.pMat_outer.opacity = 0.04;
 
-	this.pMesh_outer = new THREE.PointCloud( this.pGeom, this.pMat_outer );
+	this.pMesh_outer = new THREE.Points( this.pGeom, this.pMat_outer );
 	this.pMesh_outer.frustumCulled = false;
 
 	this.meshComponents.add( this.pMesh_outer );
@@ -302,7 +302,7 @@ function NeuralNetwork() {
 		signalMinSpeed: 1.75,
 		signalMaxSpeed: 3.25,
 		currentMaxSignals: 3000,
-        maxNeurons: 35000,
+        maxNeurons: 3500,
         maxAxons: 150000,
 		limitSignals: 10000,
         layoutScaling: 150,
@@ -356,6 +356,11 @@ function NeuralNetwork() {
     //default blue orange
 	this.neuronColor = '#ff8700';
 	this.inhibitoryNeuronColor = '#00ffc3';
+
+	this.neuronColorRGB = this.hextoRgb(this.neuronColor);
+	this.inhibitoryNeuronColorRGB = this.hextoRgb(this.inhibitoryNeuronColor);
+	this.inhibitoryNeuronColor = '#00ffc3';
+
 	this.axonColor = '#140a00';
 	this.inhibitoryAxonColor = '#000f0b';
 
@@ -367,7 +372,6 @@ function NeuralNetwork() {
 	// axon
     
 	this.axonOpacityMultiplier = 2.5;
-	this.axonGeom = new THREE.BufferGeometry();
 	this.axonPositions = [];
 	this.axonIndices = [];
 	this.axonNextPositionsIndex = 0;
@@ -389,9 +393,11 @@ function NeuralNetwork() {
 			value: []
 		}
 	};
+	this.axonGeom = new THREE.BufferGeometry({
+		attributes: this.axonAttributes
+	});
 	// inhibitory axon
 	this.inhibitoryAxonOpacityMultiplier = 2.5;
-	this.inhibitoryAxonGeom = new THREE.BufferGeometry();
 	this.inhibitoryAxonPositions = [];
 	this.inhibitoryAxonIndices = [];
 	this.inhibitoryAxonNextPositionsIndex = 0;
@@ -413,14 +419,27 @@ function NeuralNetwork() {
 			value: []
 		}
 	};
+	this.inhibitoryAxonGeom = new THREE.BufferGeometry({
+		attributes: this.inhibitoryAxonAttributes
+	});
 
 	// neuron
 	this.neuronSizeMultiplier = 1.0;
 	this.spriteTextureNeuron = TEXTURES.electric;
+	//console.log(this.spriteTextureNeuron)
 	this.neuronOpacity = 0.75;
-	this.neuronsGeom = new THREE.Geometry();
+	this.neuronColorArray = [];
+	this.neuronPositions = [];
+	this.neuronSizes = [];
+
+	var texture = new THREE.TextureLoader().load( "sprites/electric.png" );
+	texture.wrapS = THREE.RepeatWrapping;
+	texture.wrapT = THREE.RepeatWrapping;
 
 	this.neuronUniforms = {
+		amplitude: {
+			value: 1.0
+		},
 		sizeMultiplier: {
 			type: 'f',
 			value: this.neuronSizeMultiplier
@@ -430,26 +449,32 @@ function NeuralNetwork() {
 			value: this.neuronOpacity
 		},
 		texture: {
-			type: 't',
-			value: this.spriteTextureNeuron
+			value: texture
 		}
 	};
 
+	/*
 	this.neuronAttributes = {
 		color: {
 			type: 'c',
 			value: []
-		},
-		size: {
-			type: 'f',
-			value: []
 		}
+		//size: {
+		//	type: 'f',
+		//	value: []
+		//}
 	};
+	*/
 
+	this.neuronsGeom = new THREE.BufferGeometry()
+
+	//this.neuronsGeom = new THREE.Geometry({
+	//	attributes:this.neuronAttributes
+	//});
 	this.neuronShaderMaterial = new THREE.ShaderMaterial( {
 
 		uniforms: this.neuronUniforms,
-		attributes: this.neuronAttributes,
+		//attributes: this.neuronAttributes,
 		vertexShader: null,
 		fragmentShader: null,
 		blending: THREE.AdditiveBlending,
@@ -457,6 +482,15 @@ function NeuralNetwork() {
 		depthTest: false
 
 	} );
+	this.neuronSpriteMaterial = new THREE.SpriteMaterial( {
+		map : this.spriteTextureNeuron
+	});
+	this.neuronPointsMaterial = new THREE.PointsMaterial( { 
+		size: 100, 
+		map: this.spriteTextureNeuron, 
+		blending: THREE.AdditiveBlending, 
+		depthTest: false, 
+		transparent: true } );
 
 	// info api
 	this.numNeurons = 0;
@@ -765,11 +799,16 @@ NeuralNetwork.prototype.addNeuronsInArray = function ( num, EI ) {
         }else{
             I_num++;
         }
-        this.neuronsGeom.vertices[i].set(x,y,z);
+		//this.neuronsGeom.vertices[i].set(x,y,z);
+		this.neuronsGeom.attributes.position.array[i*3] = x
+		this.neuronsGeom.attributes.position.array[i*3+1] = y
+		this.neuronsGeom.attributes.position.array[i*3+2] = z
     }
     this.updateSettings();
 	this.neuronShaderMaterial.needsUpdate = true;
-	this.neuronsGeom.verticesNeedUpdate = true;
+	//this.neuronPointsMaterial.needsUpdate = true;
+	//this.neuronsGeom.verticesNeedUpdate = true;
+	this.neuronsGeom.attributes.position.needsUpdate = true;
     // for recently spawned neurons, connect to nearest neurons
     
     for (var j=0; j < num; j++) {
@@ -852,11 +891,16 @@ NeuralNetwork.prototype.addNeurons = function ( num, EorI ) {
 
         this.components.neurons[i].set(x,y,z);
         this.components.neurons[i].toggleEI(EorI);
-        this.neuronsGeom.vertices[i].set(x,y,z);
+		//this.neuronsGeom.vertices[i].set(x,y,z);
+		this.neuronsGeom.attributes.position.array[i*3] = x
+		this.neuronsGeom.attributes.position.array[i*3+1] = y
+		this.neuronsGeom.attributes.position.array[i*3+2] = z
     }
     this.updateSettings();
 	this.neuronShaderMaterial.needsUpdate = true;
-	this.neuronsGeom.verticesNeedUpdate = true;
+	//this.neuronPointsMaterial.needsUpdate = true;
+	//this.neuronsGeom.verticesNeedUpdate = true;
+	this.neuronsGeom.attributes.position.needsUpdate = true;
     // for recently spawned neurons, connect to nearest neurons
     
     for (var j=0; j < num; j++) {
@@ -921,7 +965,24 @@ NeuralNetwork.prototype.getLayout = function( i, neuronNum, gridDim ){
 }
 
 
+NeuralNetwork.prototype.hextoRgb = function (hex) {
+    // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+	var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+	//console.log("hex",hex)
+    hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+        return r + r + g + g + b + b;
+    });
 
+	var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+	return [parseInt(result[1], 16), parseInt(result[2], 16),parseInt(result[3], 16)]
+	/*
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+	} : null;
+	*/
+}
 NeuralNetwork.prototype.initVoid = function ( layout, colorscheme ) {
 
     var i,x,y,z;
@@ -929,12 +990,12 @@ NeuralNetwork.prototype.initVoid = function ( layout, colorscheme ) {
     // randomly assign E or I
     //var builtin_layout = ['ring', 'random'];
     if(colorscheme == 'skynet'){
-        this.neuronColor = '#88bbca';
+		this.neuronColor = '#88bbca';
         this.inhibitoryNeuronColor = '#e11313';
         this.axonColor = '#251310';
         this.inhibitoryAxonColor = '#140300';
     }else if(colorscheme == 'tessarect'){
-        this.neuronColor = '#cdf1fc';
+		this.neuronColor = '#cdf1fc';
         this.inhibitoryNeuronColor = '#13344a';
         this.axonColor = '#0a1318';
         this.inhibitoryAxonColor = '#010507';
@@ -946,6 +1007,8 @@ NeuralNetwork.prototype.initVoid = function ( layout, colorscheme ) {
     }
         
 
+	this.neuronColorRGB = this.hextoRgb(this.neuronColor);
+	this.inhibitoryNeuronColorRGB = this.hextoRgb(this.inhibitoryNeuronColor);
 
     var EI = [];
     var ECount = 0;
@@ -953,19 +1016,31 @@ NeuralNetwork.prototype.initVoid = function ( layout, colorscheme ) {
     var neuronNum = 0;
     this.numActiveNeurons = neuronNum;
     // prepare reserved neuron
-    console.log(this.settings.maxNeurons);
+    console.log("Max Neuron:", this.settings.maxNeurons);
     var n = new Neuron(0,0,0);
     this.components.neurons.push( n );
-    this.neuronsGeom.vertices.push( n );
+	//this.neuronsGeom.vertices.push( n );
+	//var neuronPositions = new Float32Array(this.settings.maxNeurons * 3 );
 
     for (i=1; i < this.settings.maxNeurons; i++) {
         var n = new Neuron(9999,9999,9999);
 		this.components.neurons.push( n );
-		this.neuronsGeom.vertices.push( n );
+		//this.neuronsGeom.vertices.push( n );
+
     }
     //console.log(logger);
 	for ( i = 0; i < this.components.neurons.length; i++ ) {
-		this.neuronAttributes.color.value[ i ] = new THREE.Color( this.neuronColor ); // initial neuron color
+		//this.neuronColorArray[ i ] = new THREE.Color( this.neuronColor ); // initial neuron color
+		this.neuronPositions[i*3] = 9999;
+		this.neuronPositions[i*3+1] = 9999;
+		this.neuronPositions[i*3+2] = 9999;
+
+		this.neuronColorArray[i*3] = this.neuronColorRGB[0];
+		this.neuronColorArray[i*3+1] = this.neuronColorRGB[1];
+		this.neuronColorArray[i*3+2] = this.neuronColorRGB[2]; 
+
+		this.neuronSizes[ i ] = THREE.Math.randFloat( 10*0.75, 10*3.0 ); // initial neuron size
+		//this.neuronColor.value[ i ] = new THREE.Color( this.neuronColor ); // initial neuron color
         /*
         if (EI[i]){
 		    this.neuronAttributes.color.value[ i ] = new THREE.Color( this.neuronColor ); // initial neuron color
@@ -974,16 +1049,29 @@ NeuralNetwork.prototype.initVoid = function ( layout, colorscheme ) {
         }
         */
 
-		this.neuronAttributes.size.value[ i ] = THREE.Math.randFloat( 0.75, 3.0 ); // initial neuron size
+		//this.neuronAttributes.size.value[ i ] = THREE.Math.randFloat( 10*0.75, 10*3.0 ); // initial neuron size
         
 	}
+	var bufferNeuronColors = new Float32Array(this.neuronColorArray);
+	var bufferNeuronPositions = new Float32Array(this.neuronPositions);
+	var bufferNeuronSizes= new Float32Array( this.neuronSizes);
+	//this.neuronsGeom.addAttribute( 'index', new THREE.BufferAttribute( neuronIndices, 1 ) );
+	this.neuronsGeom.addAttribute( 'color', new THREE.BufferAttribute( bufferNeuronColors, 3 ) );
+	this.neuronsGeom.addAttribute( 'position', new THREE.BufferAttribute( bufferNeuronPositions, 3 ) );
+	this.neuronsGeom.addAttribute( 'size', new THREE.BufferAttribute(bufferNeuronSizes, 1 ) );
+	this.neuronsGeom.computeBoundingSphere();
+
+	//console.log(this.neuronsGeom.attributes);
 
 
 	// neuron mesh
-	this.neuronParticles = new THREE.PointCloud( this.neuronsGeom, this.neuronShaderMaterial );
+	this.neuronParticles = new THREE.Points( this.neuronsGeom, this.neuronShaderMaterial );
+	//this.neuronParticles = new THREE.Points( this.neuronsGeom, this.neuronPointsMaterial );
+	//this.neuronParticles = new THREE.Points( this.neuronsGeom );
 	this.meshComponents.add( this.neuronParticles );
 
 	this.neuronShaderMaterial.needsUpdate = true;
+	//this.neuronPointsMaterial.needsUpdate = true;
     console.log(this.components.neurons.length);
     //console.log(this.neuronParticles, this.meshComponents);
 
@@ -1036,7 +1124,7 @@ NeuralNetwork.prototype.initVoid = function ( layout, colorscheme ) {
 
 	this.axonShaderMaterial = new THREE.ShaderMaterial( {
 		uniforms: this.axonUniforms,
-		attributes: this.axonAttributes,
+		//attributes: this.axonAttributes,
 		vertexShader: null,
 		fragmentShader: null,
 		blending: THREE.AdditiveBlending,
@@ -1044,7 +1132,8 @@ NeuralNetwork.prototype.initVoid = function ( layout, colorscheme ) {
 		transparent: true
 	} );
 
-	this.axonMesh = new THREE.Line( this.axonGeom, this.axonShaderMaterial, THREE.LinePieces );
+	//this.axonMesh = new THREE.Line( this.axonGeom, this.axonShaderMaterial, THREE.LinePieces );
+	this.axonMesh = new THREE.Line( this.axonGeom, this.axonShaderMaterial, THREE.LineSegments );
 	this.meshComponents.add( this.axonMesh );
 
 
@@ -1060,7 +1149,7 @@ NeuralNetwork.prototype.initVoid = function ( layout, colorscheme ) {
 
 	this.inhibitoryAxonShaderMaterial = new THREE.ShaderMaterial( {
 		uniforms: this.inhibitoryAxonUniforms,
-		attributes: this.inhibitoryAxonAttributes,
+		//attributes: this.inhibitoryAxonAttributes,
 		vertexShader: null,
 		fragmentShader: null,
 		blending: THREE.AdditiveBlending,
@@ -1068,7 +1157,8 @@ NeuralNetwork.prototype.initVoid = function ( layout, colorscheme ) {
 		transparent: true
 	} );
 
-	this.inhibitoryAxonMesh = new THREE.Line( this.inhibitoryAxonGeom, this.inhibitoryAxonShaderMaterial, THREE.LinePieces );
+	//this.inhibitoryAxonMesh = new THREE.Line( this.inhibitoryAxonGeom, this.inhibitoryAxonShaderMaterial, THREE.LinePieces );
+	this.inhibitoryAxonMesh = new THREE.Line( this.inhibitoryAxonGeom, this.inhibitoryAxonShaderMaterial, THREE.LineSegments );
 	this.meshComponents.add( this.inhibitoryAxonMesh );
 
 
@@ -1091,7 +1181,7 @@ NeuralNetwork.prototype.initVoid = function ( layout, colorscheme ) {
 
 
 }
-NeuralNetwork.prototype.initFromGraph = function ( my_url, layout ) {
+NeuralNetwork.prototype.initFromGraph = function ( my_url, layout 
 
     var graph = (function () {
         var json = null;
@@ -1181,6 +1271,7 @@ NeuralNetwork.prototype.initFromGraph = function ( my_url, layout ) {
         //n.firingRate = 100*THREE.Math.randFloat(0.1, 0.3);
         this.components.neurons.push( n );
 		this.neuronsGeom.vertices.push( n );
+
         //logger += graph.nodes[i]['z'];
 
     }
@@ -1200,16 +1291,18 @@ NeuralNetwork.prototype.initFromGraph = function ( my_url, layout ) {
 		    this.neuronAttributes.color.value[ i ] = new THREE.Color( this.inhibitoryNeuronColor ); // initial neuron color
         }
 
-		this.neuronAttributes.size.value[ i ] = THREE.Math.randFloat( 0.75, 3.0 ); // initial neuron size
+		this.neuronAttributes.size.value[ i ] = 10*THREE.Math.randFloat( 0.75, 3.0 ); // initial neuron size
         
 	}
 
 
 	// neuron mesh
-	this.neuronParticles = new THREE.PointCloud( this.neuronsGeom, this.neuronShaderMaterial );
+	this.neuronParticles = new THREE.Points( this.neuronsGeom, this.neuronShaderMaterial );
+	//this.neuronParticles = new THREE.Points( this.neuronsGeom, this.neuronPointsMaterial );
 	this.meshComponents.add( this.neuronParticles );
 
 	this.neuronShaderMaterial.needsUpdate = true;
+	//this.neuronPointsMaterial.needsUpdate = true;
     console.log(this.components.neurons.length);
     //console.log(this.neuronParticles, this.meshComponents);
 
@@ -1269,7 +1362,7 @@ NeuralNetwork.prototype.initFromGraph = function ( my_url, layout ) {
 
 	this.axonShaderMaterial = new THREE.ShaderMaterial( {
 		uniforms: this.axonUniforms,
-		attributes: this.axonAttributes,
+		//attributes: this.axonAttributes,
 		vertexShader: null,
 		fragmentShader: null,
 		blending: THREE.AdditiveBlending,
@@ -1277,7 +1370,8 @@ NeuralNetwork.prototype.initFromGraph = function ( my_url, layout ) {
 		transparent: true
 	} );
 
-	this.axonMesh = new THREE.Line( this.axonGeom, this.axonShaderMaterial, THREE.LinePieces );
+	//this.axonMesh = new THREE.Line( this.axonGeom, this.axonShaderMaterial, THREE.LinePieces );
+	this.axonMesh = new THREE.Line( this.axonGeom, this.axonShaderMaterial, THREE.LineSegments );
 	this.meshComponents.add( this.axonMesh );
 
 
@@ -1293,7 +1387,7 @@ NeuralNetwork.prototype.initFromGraph = function ( my_url, layout ) {
 
 	this.inhibitoryAxonShaderMaterial = new THREE.ShaderMaterial( {
 		uniforms: this.inhibitoryAxonUniforms,
-		attributes: this.inhibitoryAxonAttributes,
+		//attributes: this.inhibitoryAxonAttributes,
 		vertexShader: null,
 		fragmentShader: null,
 		blending: THREE.AdditiveBlending,
@@ -1301,7 +1395,8 @@ NeuralNetwork.prototype.initFromGraph = function ( my_url, layout ) {
 		transparent: true
 	} );
 
-	this.inhibitoryAxonMesh = new THREE.Line( this.inhibitoryAxonGeom, this.inhibitoryAxonShaderMaterial, THREE.LinePieces );
+	//this.inhibitoryAxonMesh = new THREE.Line( this.inhibitoryAxonGeom, this.inhibitoryAxonShaderMaterial, THREE.LinePieces );
+	this.inhibitoryAxonMesh = new THREE.Line( this.inhibitoryAxonGeom, this.inhibitoryAxonShaderMaterial, THREE.LineSegments );
 	this.meshComponents.add( this.inhibitoryAxonMesh );
 
 
@@ -1372,7 +1467,9 @@ NeuralNetwork.prototype.update = function ( deltaTime ) {
 
         }
         currentFiringRate[ii] = n.firingRate;
-        this.neuronAttributes.size.value[ii] = n.firingRate / 20 + 1;
+        //this.neuronAttributes.size.value[ii] = n.firingRate / 20 + 1;
+		this.neuronsGeom.attributes.size.array[ii] = 1000* n.firingRate / 20 + 1;
+		//console.log("geomsize changed");
 		n.receivedSignal = false; // if neuron recieved signal but still in delay reset it
 	}
     this.dataRecord.push(currentFiringRate);
@@ -1403,7 +1500,8 @@ NeuralNetwork.prototype.update = function ( deltaTime ) {
 
 	}
 
-    this.neuronAttributes.size.needsUpdate = true;
+    //this.neuronAttributes.size.needsUpdate = true;
+    this.neuronsGeom.attributes.size.needsUpdate = true;
     this.axonGeom.attributes.opacity.needsUpdate = true;
 	// update particle pool vertices
 	this.particlePool.update();
@@ -1493,15 +1591,25 @@ NeuralNetwork.prototype.updateInfo = function () {
 NeuralNetwork.prototype.updateSettings = function () {
 
 	this.neuronUniforms.opacity.value = this.neuronOpacity;
+	this.neuronColorRGB = this.hextoRgb(this.neuronColor)
+	this.inhibitoryNeuronColorRGB = this.hextoRgb(this.inhibitoryNeuronColor)
 
 	for ( i = 0; i < this.components.neurons.length; i++ ) {
         if( this.components.neurons[i].excitatory ) {
-		    this.neuronAttributes.color.value[ i ].setStyle( this.neuronColor ); // initial neuron color
+		    //this.neuronAttributes.color.value[ i ].setStyle( this.neuronColor ); // initial neuron color
+		    this.neuronsGeom.attributes.color.array[ i*3 ] = this.neuronColorRGB[0]; // initial neuron color
+		    this.neuronsGeom.attributes.color.array[ i*3+1 ] = this.neuronColorRGB[1]; // initial neuron color
+		    this.neuronsGeom.attributes.color.array[ i*3+2 ] = this.neuronColorRGB[2]; // initial neuron color
         }else{
-		    this.neuronAttributes.color.value[ i ].setStyle( this.inhibitoryNeuronColor ); // initial neuron color
+		    //this.neuronAttributes.color.value[ i ].setStyle( this.inhibitoryNeuronColor ); // initial neuron color
+		    this.neuronsGeom.attributes.color.array[ i*3 ] = this.inhibitoryNeuronColorRGB[0]; // initial neuron color
+		    this.neuronsGeom.attributes.color.array[ i*3+1 ] = this.inhibitoryNeuronColorRGB[1]; // initial neuron color
+		    this.neuronsGeom.attributes.color.array[ i*3+2 ] = this.inhibitoryNeuronColorRGB[2]; // initial neuron color
         }
 	}
-	this.neuronAttributes.color.needsUpdate = true;
+	//this.neuronAttributes.color.needsUpdate = true;
+	this.neuronsGeom.attributes.color.needsUpdate = true;
+	this.neuronsGeom.attributes.size.needsUpdate = true;
 
 	this.neuronUniforms.sizeMultiplier.value = this.neuronSizeMultiplier;
 
@@ -1544,7 +1652,7 @@ loadingManager.onProgress = function ( item, loaded, total ) {
 };
 
 
-var shaderLoader = new THREE.XHRLoader( loadingManager );
+var shaderLoader = new THREE.FileLoader( loadingManager );
 shaderLoader.setResponseType( 'text' );
 
 shaderLoader.loadMultiple = function ( SHADER_CONTAINER, urlObj ) {
@@ -1678,11 +1786,33 @@ WEBVR.getVRDisplay( function ( display ) {
 
 controller1 = new THREE.ViveController( 0 );
 controller1.standingMatrix = renderer.vr.getStandingMatrix();
+controller1.addEventListener( 'triggerdown', onTriggerDown );
+controller1.addEventListener( 'triggerup', onTriggerUp );
+controller1.addEventListener( 'axischanged', onAxisChanged );
 scene.add( controller1 );
 
 controller2 = new THREE.ViveController( 1 );
 controller2.standingMatrix = renderer.vr.getStandingMatrix();
+controller2.addEventListener( 'triggerdown', onTriggerDown );
+controller2.addEventListener( 'triggerup', onTriggerUp );
+controller2.addEventListener( 'axischanged', onAxisChanged );
 scene.add( controller2 );
+function onTriggerDown(event){}
+
+function onTriggerDown( event ) {
+	var controller = event.target;
+	var intersections = getIntersections( controller );
+	if ( intersections.length > 0 ) {
+		var intersection = intersections[ 0 ];
+		tempMatrix.getInverse( controller.matrixWorld );
+		var object = intersection.object;
+		object.matrix.premultiply( tempMatrix );
+		object.matrix.decompose( object.position, object.quaternion, object.scale );
+		object.material.emissive.b = 1;
+		controller.add( object );
+		controller.userData.selected = object;
+	}
+}
 // ---- Stats
 stats = new Stats();
 container.appendChild( stats.domElement );
