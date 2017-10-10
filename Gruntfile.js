@@ -16,12 +16,11 @@ module.exports = function ( grunt ) {
 				// banner: '/* <%= pkg.name %> <%= grunt.template.today("yyyy-mm-dd") %> */\n',
 				// footer: ''
 			},
-			//build: {
-			//	src: [ 'js/neuron.js', 'js/signal.js', 'js/particlePool.js', 'js/particle.js', 'js/axon.js', 'js/neuralNet.js',
-			//			 'js/loaders.js', 'js/scene.js', 'js/main.js', 'js/gui.js', 'js/run.js', 'js/events.js' ],
+			build: {
+				src: [ 'js/neuron.js', 'js/axon.js', 'js/neuralnetwork.js','js/main.js'],
 
-			//	dest: 'js/build/app.js'
-			//},
+				dest: 'js/build/app.js'
+			},
 			vendor: {
 				src: [ 'js/vendor/underscore.js', 'js/vendor/Detector.js', 'js/vendor/dat.gui.min.js',
 						 'js/vendor/stats.min.js', 'js/vendor/three.js','js/vendor/OrbitControls.js', 'js/vendor/OBJLoader.js' ],
