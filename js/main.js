@@ -133,144 +133,149 @@ renderer.autoClear = false;
 container.appendChild( renderer.domElement );
 
 // ---- VR related
-WEBVR.checkAvailability().catch( function( message ) {
+var VR_flag = true;
+if(VR_flag) {
+	WEBVR.checkAvailability().catch( function( message ) {
 
-	document.body.appendChild( WEBVR.getMessageContainer( message ) );
+		document.body.appendChild( WEBVR.getMessageContainer( message ) );
 
-} );
+	} );
 
 
-renderer.vr.enabled = true; //VR
-renderer.vr.standing = true;
+	renderer.vr.enabled = true; //VR
+	renderer.vr.standing = true;
 
-WEBVR.getVRDisplay( function ( display ) {
+	WEBVR.getVRDisplay( function ( display ) {
 
-	renderer.vr.setDevice( display );
+		renderer.vr.setDevice( display );
 
-	document.body.appendChild( WEBVR.getButton( display, renderer.domElement ) );
+		document.body.appendChild( WEBVR.getButton( display, renderer.domElement ) );
 
-} );
-// VR Controller
+	} );
+	// VR Controller
 
-var controller1, controller2;
-var raycaster, intersected = [];
-var tempMatrix = new THREE.Matrix4();
-controller1 = new THREE.ViveController( 0 );
-controller1.standingMatrix = renderer.vr.getStandingMatrix();
-controller1.addEventListener( 'triggerdown', onTriggerDown );
-controller1.addEventListener( 'triggerup', onTriggerUp );
-controller1.addEventListener( 'thumbpaddown', onThumbpadDown );
-controller1.addEventListener( 'thumbpadup', onThumbpadUp );
-controller1.addEventListener( 'axischanged', onAxisChanged );
-scene.add( controller1 );
-console.log("got controller 0")
+	var controller1, controller2;
+	var raycaster, intersected = [];
+	var tempMatrix = new THREE.Matrix4();
+	controller1 = new THREE.ViveController( 0 );
+	controller1.standingMatrix = renderer.vr.getStandingMatrix();
+	controller1.addEventListener( 'triggerdown', onTriggerDown );
+	controller1.addEventListener( 'triggerup', onTriggerUp );
+	controller1.addEventListener( 'thumbpaddown', onThumbpadDown );
+	controller1.addEventListener( 'thumbpadup', onThumbpadUp );
+	controller1.addEventListener( 'axischanged', onAxisChanged );
+	scene.add( controller1 );
+	console.log("got controller 0")
 
-controller2 = new THREE.ViveController( 1 );
-controller2.standingMatrix = renderer.vr.getStandingMatrix();
-controller2.addEventListener( 'triggerdown', onTriggerDown );
-controller2.addEventListener( 'triggerup', onTriggerUp );
-controller2.addEventListener( 'thumbpaddown', onThumbpadDown );
-controller2.addEventListener( 'thumbpadup', onThumbpadUp );
-controller2.addEventListener( 'axischanged', onAxisChanged );
-scene.add( controller2 );
-console.log("got controller 1")
-var loader = new THREE.OBJLoader();
-loader.setPath( 'models/obj/vive-controller/' );
-loader.load( 'vr_controller_vive_1_5.obj', function ( object ) {
-
-	var loader = new THREE.TextureLoader();
+	controller2 = new THREE.ViveController( 1 );
+	controller2.standingMatrix = renderer.vr.getStandingMatrix();
+	controller2.addEventListener( 'triggerdown', onTriggerDown );
+	controller2.addEventListener( 'triggerup', onTriggerUp );
+	controller2.addEventListener( 'thumbpaddown', onThumbpadDown );
+	controller2.addEventListener( 'thumbpadup', onThumbpadUp );
+	controller2.addEventListener( 'axischanged', onAxisChanged );
+	scene.add( controller2 );
+	console.log("got controller 1")
+	var loader = new THREE.OBJLoader();
 	loader.setPath( 'models/obj/vive-controller/' );
+	loader.load( 'vr_controller_vive_1_5.obj', function ( object ) {
 
-	var controller = object.children[ 0 ];
-	controller.material.map = loader.load( 'onepointfive_texture.png' );
-	controller.material.specularMap = loader.load( 'onepointfive_spec.png' );
+		var loader = new THREE.TextureLoader();
+		loader.setPath( 'models/obj/vive-controller/' );
 
-	controller1.add( object.clone() );
-	controller2.add( object.clone() );
+		var controller = object.children[ 0 ];
+		controller.material.map = loader.load( 'onepointfive_texture.png' );
+		controller.material.specularMap = loader.load( 'onepointfive_spec.png' );
 
-} );
+		controller1.add( object.clone() );
+		controller2.add( object.clone() );
 
-var line_geometry_1 = new THREE.Geometry({color : new THREE.Color(0x00ffff)});
-var line_geometry_2 = new THREE.Geometry({color : new THREE.Color(0xffff00)});
-line_geometry_1.vertices.push( new THREE.Vector3( 0, 0, 0 ) );
-line_geometry_1.vertices.push( new THREE.Vector3( 0, 0, - 1 ) );
-line_geometry_2.vertices.push( new THREE.Vector3( 0, 0, 0 ) );
-line_geometry_2.vertices.push( new THREE.Vector3( 0, 0, - 1 ) );
-var line_1 = new THREE.Line( line_geometry_1 );
-var line_2 = new THREE.Line( line_geometry_2 );
-line_1.name = 'line_1';
-line_1.scale.z = 15;
-line_2.name = 'line_2';
-line_2.scale.z = 15;
-controller1.add( line_1.clone() );
-controller2.add( line_2.clone() );
-raycaster = new THREE.Raycaster();
+	} );
 
-function onTriggerDown( event ) {
-	var controller = event.target;
-	var intersections = getIntersections( controller );
-	if (intersections.length > 0) {
-		var intersection = intersections[0];
-		console.log(intersection, "selected")
+	var line_geometry_1 = new THREE.Geometry({color : new THREE.Color(0x00ffff)});
+	var line_geometry_2 = new THREE.Geometry({color : new THREE.Color(0xffff00)});
+	line_geometry_1.vertices.push( new THREE.Vector3( 0, 0, 0 ) );
+	line_geometry_1.vertices.push( new THREE.Vector3( 0, 0, - 1 ) );
+	line_geometry_2.vertices.push( new THREE.Vector3( 0, 0, 0 ) );
+	line_geometry_2.vertices.push( new THREE.Vector3( 0, 0, - 1 ) );
+	line_material_1 = new THREE.LineBasicMaterial( { color: new THREE.Color(0x00ffff) } );
+	line_material_2 = new THREE.LineBasicMaterial( { color: new THREE.Color(0xffff00) } );
+	var line_1 = new THREE.Line( line_geometry_1, line_material_1);
+	var line_2 = new THREE.Line( line_geometry_2, line_material_2);
+	line_1.name = 'line_1';
+	line_1.scale.z = 15;
+	line_2.name = 'line_2';
+	line_2.scale.z = 15;
+	controller1.add( line_1.clone() );
+	controller2.add( line_2.clone() );
+	console.log(line_1, line_2);
+	raycaster = new THREE.Raycaster();
+
+	function onTriggerDown( event ) {
+		var controller = event.target;
+		var intersections = getIntersections( controller );
+		if (intersections.length > 0) {
+			var intersection = intersections[0];
+			console.log(intersection, "selected")
+		}
+		console.log(controller, "TriggerDown")
+	};
+	function onTriggerUp( event ) {
+		var controller = event.target;
+		console.log(controller, "TriggerUp")
+	};
+	function onThumbpadDown( event ) {
+		var controller = event.target;
+		tempMatrix.identity().extractRotation( controller.matrixWorld );
+		raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
+		raycaster.ray.direction.set( 0, 0, -1 ).applyMatrix4( tempMatrix );
+
+		console.log(controller, "ThumbpadDown", raycaster.ray.direction);
+		//camera.position.x = camera.position.x + 10*raycaster.ray.direction.x;
+		//camera.position.y = camera.position.y + 10*raycaster.ray.direction.y;
+		//camera.position.z = camera.position.z + 10*raycaster.ray.direction.z;
+		camera.translateZ(-10)
+		console.log(camera.position)
+		camera.position.needsUpdate = true
+		camera.lookAt(camera.position)
+	};
+	function onThumbpadUp( event ) {
+		var controller = event.target;
+		console.log(controller, "ThumbpadUp")
+	};
+	function onAxisChanged( event ) {
+		var controller = event.target;
+		//console.log(controller, "AxisChanged", event)
+	};
+
+	function getIntersections( controller ) {
+		tempMatrix.identity().extractRotation( controller.matrixWorld );
+		raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
+		raycaster.ray.direction.set( 0, 0, -1 ).applyMatrix4( tempMatrix );
+		return raycaster.intersectObjects( group.children );
 	}
-	console.log(controller, "TriggerDown")
-};
-function onTriggerUp( event ) {
-	var controller = event.target;
-	console.log(controller, "TriggerUp")
-};
-function onThumbpadDown( event ) {
-	var controller = event.target;
-	tempMatrix.identity().extractRotation( controller.matrixWorld );
-	raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
-	raycaster.ray.direction.set( 0, 0, -1 ).applyMatrix4( tempMatrix );
-
-	console.log(controller, "ThumbpadDown", raycaster.ray.direction);
-	//camera.position.x = camera.position.x + 10*raycaster.ray.direction.x;
-	//camera.position.y = camera.position.y + 10*raycaster.ray.direction.y;
-	//camera.position.z = camera.position.z + 10*raycaster.ray.direction.z;
-	camera.translateZ(-10)
-	console.log(camera.position)
-	camera.position.needsUpdate = true
-	camera.lookAt(camera.position)
-};
-function onThumbpadUp( event ) {
-	var controller = event.target;
-	console.log(controller, "ThumbpadUp")
-};
-function onAxisChanged( event ) {
-	var controller = event.target;
-	//console.log(controller, "AxisChanged", event)
-};
-
-function getIntersections( controller ) {
-	tempMatrix.identity().extractRotation( controller.matrixWorld );
-	raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
-	raycaster.ray.direction.set( 0, 0, -1 ).applyMatrix4( tempMatrix );
-	return raycaster.intersectObjects( group.children );
-}
-function intersectObjects( controller ) {
-	// Do not highlight when already selected
-	if ( controller.userData.selected !== undefined ) return;
-	var line = controller.getObjectByName( 'line' );
-	var intersections = getIntersections( controller );
-	if ( intersections.length > 0 ) {
-		var intersection = intersections[ 0 ];
-		var object = intersection.object;
-		object.material.emissive.r = 1;
-		intersected.push( object );
-		line.scale.z = intersection.distance;
-	} else {
-		line.scale.z = 5;
+	function intersectObjects( controller ) {
+		// Do not highlight when already selected
+		if ( controller.userData.selected !== undefined ) return;
+		var line = controller.getObjectByName( 'line' );
+		var intersections = getIntersections( controller );
+		if ( intersections.length > 0 ) {
+			var intersection = intersections[ 0 ];
+			var object = intersection.object;
+			object.material.emissive.r = 1;
+			intersected.push( object );
+			line.scale.z = intersection.distance;
+		} else {
+			line.scale.z = 5;
+		}
+	}
+	function cleanIntersected() {
+		while ( intersected.length ) {
+			var object = intersected.pop();
+			object.material.emissive.r = 0;
+		}
 	}
 }
-function cleanIntersected() {
-	while ( intersected.length ) {
-		var object = intersected.pop();
-		object.material.emissive.r = 0;
-	}
-}
-
 
 
 
@@ -420,8 +425,10 @@ function run() {
 	renderer.setClearColor( sceneSettings.bgColor, 1 );
 	renderer.clear();
 	update();
-	controller1.update();
-	controller2.update();
+	if(VR_flag){
+		controller1.update();
+		controller2.update();
+	}
 	renderer.render( scene, camera );
 	stats.update();
 	FRAME_COUNT ++;

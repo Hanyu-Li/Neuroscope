@@ -25,7 +25,7 @@ function NeuralNetwork() {
         maxAxons: 150000,
 		//limitSignals: 10000,
         layoutScaling: 150,
-        layoutStyle: 'random',
+        layoutStyle: 'ring',
         IRatio: 0.618,
         spawned: 0
 
@@ -90,7 +90,7 @@ function NeuralNetwork() {
 
 	// axon
     
-	this.axonOpacityMultiplier = 2.5;
+	this.axonOpacityMultiplier = 1.5;
 	this.axonPositions = [];
 	this.axonIndices = [];
 	this.axonNextPositionsIndex = 0;
@@ -152,7 +152,7 @@ function NeuralNetwork() {
 	this.neuronPositions = [];
 	this.neuronSizes = [];
 
-	var texture = new THREE.TextureLoader().load( "sprites/lensflare0.png" );
+	var texture = new THREE.TextureLoader().load( "sprites/lensflare_gray.png" );
 	var electrictexture = new THREE.TextureLoader().load( "sprites/electric.png" );
 	//texture.wrapS = THREE.RepeatWrapping;
 	//texture.wrapT = THREE.RepeatWrapping;
@@ -267,7 +267,7 @@ NeuralNetwork.prototype.initNeuralNetwork = function () {
 	//this.initAxons();
     //console.log(OBJ_MODELS);
 
-	this.initVoid(this.settings.layoutStyle, colorscheme='EI');
+	this.initVoid(this.settings.layoutStyle, colorscheme='tessarect');
 	this.neuronShaderMaterial.vertexShader = SHADER_CONTAINER.neuronVert;
 	this.neuronShaderMaterial.fragmentShader = SHADER_CONTAINER.neuronFrag;
 
@@ -614,11 +614,11 @@ NeuralNetwork.prototype.addNeurons = function ( num, EorI ) {
             z = rho*Math.cos(phi); 
         } else if( this.settings.layoutStyle == 'grid') {
             x = (i-this.numActiveNeurons)%gridDim *
-                this.settings.layoutScaling /100;
+                this.settings.layoutScaling /100 ;
 
             y = (i-this.numActiveNeurons)/gridDim *
-                this.settings.layoutScaling /100;
-            z = this.settings.spawned * 20;
+                this.settings.layoutScaling /100 ;
+            z = this.settings.spawned * 20 ;
         }
         //console.log(x,y,z);
 
