@@ -142,7 +142,7 @@ function NeuralNetwork() {
         maxAxons: 150000,
 		//limitSignals: 10000,
         layoutScaling: 150,
-        layoutStyle: 'ring',
+        layoutStyle: 'random',
         IRatio: 0.618,
         spawned: 0
 
@@ -323,7 +323,7 @@ function NeuralNetwork() {
 		fragmentShader: null,
 		blending: THREE.AdditiveBlending,
 		transparent: true,
-		depthTest: true
+		depthTest: false
 
 	} );
 	this.neuronSpriteMaterial = new THREE.SpriteMaterial( {
@@ -1659,7 +1659,7 @@ container = document.getElementById( 'canvas-container' );
 scene = new THREE.Scene();
 
 // ---- Camera
-camera = new THREE.PerspectiveCamera( 90, screenRatio, 0, 9999 );
+camera = new THREE.PerspectiveCamera( 90, screenRatio, 0.1, 9999 );
 // camera orbit control
 cameraCtrl = new THREE.OrbitControls( camera, container );
 cameraCtrl.object.position.y = 150;
@@ -1897,7 +1897,7 @@ function initGui() {
 	//gui_settings.add( neuralNet.particlePool, 'pSize', 0.2, 2 ).name( 'Signal Size' );
 	//gui_settings.add( neuralNet.settings, 'signalMinSpeed', 0.0, 8.0, 0.01 ).name( 'Signal Min Speed' );
 	//gui_settings.add( neuralNet.settings, 'signalMaxSpeed', 0.0, 8.0, 0.01 ).name( 'Signal Max Speed' );
-	gui_settings.add( neuralNet, 'neuronSizeMultiplier', 0, 6 ).name( 'Neuron Size Mult' );
+	gui_settings.add( neuralNet, 'neuronSizeMultiplier', 0, 60 ).name( 'Neuron Size Mult' );
 	gui_settings.add( neuralNet, 'neuronOpacity', 0, 1.0 ).name( 'Neuron Opacity' );
 	gui_settings.add( neuralNet, 'axonOpacityMultiplier', 0.0, 15.0 ).name( 'Axon Opacity Mult' );
 	//gui_settings.addColor( neuralNet.particlePool, 'pColor' ).name( 'Signal Color' );
@@ -1969,10 +1969,12 @@ function run() {
 	renderer.setClearColor( sceneSettings.bgColor, 1 );
 	renderer.clear();
 	update();
+	/*
 	if(VR_flag){
 		controller1.update();
 		controller2.update();
 	}
+	*/
 	renderer.render( scene, camera );
 	stats.update();
 	FRAME_COUNT ++;

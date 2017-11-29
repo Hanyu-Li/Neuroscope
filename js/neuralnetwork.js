@@ -25,7 +25,7 @@ function NeuralNetwork() {
         maxAxons: 150000,
 		//limitSignals: 10000,
         layoutScaling: 150,
-        layoutStyle: 'ring',
+        layoutStyle: 'random',
         IRatio: 0.618,
         spawned: 0
 
@@ -206,7 +206,7 @@ function NeuralNetwork() {
 		fragmentShader: null,
 		blending: THREE.AdditiveBlending,
 		transparent: true,
-		depthTest: true
+		depthTest: false
 
 	} );
 	this.neuronSpriteMaterial = new THREE.SpriteMaterial( {
