@@ -133,7 +133,7 @@ renderer.autoClear = false;
 container.appendChild( renderer.domElement );
 
 // ---- VR related
-var VR_flag = true;
+var VR_flag = false;
 if(VR_flag) {
 	WEBVR.checkAvailability().catch( function( message ) {
 
