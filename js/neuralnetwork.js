@@ -239,7 +239,8 @@ function NeuralNetwork() {
 
 	this.numPassive = 0;
 
-    // Other controls
+    // Other controlsSpawn Random
+
     /*
     this.spawn = function() {
         console.log('shunjianbaozha');
@@ -257,8 +258,8 @@ function NeuralNetwork() {
 
 NeuralNetwork.prototype.initNeuralNetwork = function () {
 
-    var my_url = 'models/mouse_retina.json';
-    this.initFromGraph(my_url, 'grid', colorscheme='tessarect');
+    //var my_url = 'models/mouse_retina.json';
+    //this.initFromGraph(my_url, 'grid', colorscheme='tessarect');
 
     //for(var i=0;i<10;i++)
     //    this.spawn_random();
@@ -267,7 +268,7 @@ NeuralNetwork.prototype.initNeuralNetwork = function () {
 	//this.initAxons();
     //console.log(OBJ_MODELS);
 
-	//this.initVoid(this.settings.layoutStyle, colorscheme='tessarect');
+	this.initVoid(this.settings.layoutStyle, colorscheme='tessarect');
 	this.neuronShaderMaterial.vertexShader = SHADER_CONTAINER.neuronVert;
 	this.neuronShaderMaterial.fragmentShader = SHADER_CONTAINER.neuronFrag;
 
@@ -351,7 +352,40 @@ NeuralNetwork.prototype.download= function(){
 
     console.log(this.dataRecord.length);
     //prepare meta data
-    var allData = {'connectivity':'a', 'EI': 'ei', 'data': this.dataRecord};
+
+    var EI = [];
+    var conn = [];
+    for(i=0;i<this.numActiveNeurons;i++){
+        var n = this.components.neurons[i];
+        n.ID = i;
+        if(n.excitatory){
+            EI.push(i);
+        }
+    }
+    for(i=0;i<this.numActiveExcitatoryAxons;i++){
+        var ax = this.components.allAxons[i];
+        conn.push([ax.neuronA.ID, ax.neuronB.ID, ax.weight])
+        //console.log(ax.neuronA, ax.neuronB, ax.neuronA.excitatory);
+    }
+    for(i=0;i<this.numActiveInhibitoryAxons;i++){
+        var ax = this.components.allInhibitoryAxons[i];
+        conn.push([ax.neuronA.ID, ax.neuronB.ID,ax.weight])
+        //console.log(ax.neuronA, ax.neuronB, ax.neuronA.excitatory);
+    }
+    /*
+    for(i=0;i<this.numActiveNeurons;i++){
+        var n = this.components.neurons[i];
+        var _conn = []
+        for(j=0;j<n.connection.length;j++){
+            console.log(n.connection.axon.neuronB);
+            _conn.push(n.connection.axon.neuronB.ID);
+        }
+        conn[n.ID] = _conn;
+        
+
+    }
+    */
+    var allData = {'connectivity': conn, 'EI': EI, 'data': this.dataRecord};
     //prepare data
     //var json = JSON.stringify(this.dataRecord);
     var json = JSON.stringify(allData);
@@ -1048,8 +1082,16 @@ NeuralNetwork.prototype.initFromGraph = function ( my_url, layout,colorscheme ){
                             1*graph.nodes[i]['y'],
                             1*graph.nodes[i]['z'] );
         } else {
-            [x,y,z] = this.getLayout(i,neuronNum, gridDim);
+            // if no coord found, average previous two 
+            //[x,y,z] = this.getLayout(i,neuronNum, gridDim);
             //console.log(x,y,z);
+            [x,y,z] = [0,0,0];
+            if(i > 2){
+                x = (this.components.neurons[i-1].x + this.components.neurons[i-2].x ) / 2;
+                y = (this.components.neurons[i-1].y + this.components.neurons[i-2].y ) / 2;
+                z = (this.components.neurons[i-1].z + this.components.neurons[i-2].z ) / 2;
+            }
+
             n = new Neuron(x,y,z);
         }
 
@@ -1207,6 +1249,11 @@ NeuralNetwork.prototype.initFromGraph = function ( my_url, layout,colorscheme ){
     console.log(currentFiringRate);
 
 }
+
+NeuralNetwork.prototype.initFromSWC = function ( layout, colorscheme ) {
+    ;
+}
+
 
 NeuralNetwork.prototype.update = function ( deltaTime ) {
 

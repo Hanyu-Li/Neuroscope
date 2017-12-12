@@ -1,6 +1,7 @@
 // Neuron ----------------------------------------------------------------
 function Neuron( x, y, z ) {
 
+	this.ID = 0;
 	this.connection = [];
 	//this.receivedSignal = false;
 	//this.lastSignalRelease = 0;
