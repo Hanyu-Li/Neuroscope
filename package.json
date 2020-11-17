@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "glob": "^7.1.2",
     "jquery": "^3.2.1",
     "ndarray": "^1.0.18",
     "underscore": "^1.8.3"

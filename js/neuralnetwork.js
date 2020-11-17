@@ -1249,7 +1249,40 @@ NeuralNetwork.prototype.initFromGraph = function ( my_url, layout,colorscheme ){
     console.log(currentFiringRate);
 
 }
-
+function swc_parser(swc_file) {
+    // split by lines
+    var swc_ar = swc_file.split("\n");
+    var swc_json = {};
+ 
+    var float = '-?\\d*(?:\\.\\d+)?';
+    var pattern = new RegExp('^[ \\t]*(' + [
+       '\\d+',   // index
+       '\\d+',  // type
+       float,    // x
+       float,    // y
+       float,    // z
+       float,    // radius
+       '-1|\\d+' // parent
+    ].join(')[ \\t]+(') + ')[ \\t]*$', 'm');
+ 
+    swc_ar.forEach(function (e) {
+       // if line is good, put into json
+       var match = e.match(pattern);
+       if (match) {
+          swc_json[match[1]] = {
+             'type': parseInt(match[2]),
+             'x': parseFloat(match[3]),
+             'y': parseFloat(match[4]),
+             'z': parseFloat(match[5]),
+             'radius': parseFloat(match[6]),
+             'parent': parseInt(match[7]),
+          };
+       }
+    });
+ 
+    // return json
+    return swc_json;
+ }
 NeuralNetwork.prototype.initFromSWC = function ( layout, colorscheme ) {
     ;
 }
